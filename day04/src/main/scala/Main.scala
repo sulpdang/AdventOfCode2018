@@ -38,7 +38,7 @@ object Main extends Day(4) {
               val end = a.minute
               if(!minutes.contains(id)) minutes(id)=List()
               minutes(id) ++= (start until end)
-              travel(tail, minutes, id, a.substring(15,17).toInt)
+              travel(tail, minutes, id, a.minute)
           }
         }
       }
