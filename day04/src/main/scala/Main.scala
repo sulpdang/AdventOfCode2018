@@ -10,19 +10,17 @@ import myutil._
 
 object Main extends Day(4) {
 
-  type Input = List[String]
   type MINUTES = Map[Int, List[Int]]
+  type Input = MINUTES
 
   implicit class MyParser(val value:String) extends AnyVal {
     def minute:Int = value.substring(15,17).toInt
     def hour:Int   = value.substring(12,14).toInt
   }
 
-  def processedInput = input.sorted
-
-  lazy val minutes = {
+  def processedInput = {
     @tailrec
-    def travel(input:Input, minutes:MINUTES = Map(),
+    def travel(input:List[String], minutes:MINUTES = Map(),
                id:Int= -1, start:Int=0):MINUTES = {
       input match {
         case Nil => minutes
@@ -43,16 +41,16 @@ object Main extends Day(4) {
         }
       }
     }
-    travel(processedInput)
+    travel(input.sorted)
   }
 
   def solve(input:Input) = {
-    val (id, sleepMins) = minutes.maxBy{case (k, v) => v.size}
+    val (id, sleepMins) = input.maxBy{case (k, v) => v.size}
     val maxMinutes = sleepMins.groupBy{x=>x}.maxBy{case (k, v) => v.size}._1
     id * maxMinutes
   }
   def solve2(input:Input) = {
-    val (id, min, _) = minutes.map{case (k, v) => 
+    val (id, min, _) = input.map{case (k, v) => 
       val (min, count) = v.groupBy(x=>x).mapValues(_.size).maxBy(_._2)
       (k, min, count)
     }.toList.maxBy{_._3}
