@@ -14,20 +14,13 @@ object Main extends Day(5) {
   def processedInput = react(input.head.toList)
 
   @tailrec
-  def react(charList:List[Char], processed:Stack[Char]=Stack(), isChanged:Boolean=false):String = {
+  def react(charList:List[Char], stack:Stack[Char]=Stack(), isChanged:Boolean=false):String = {
     charList match {
-      case Nil => if(isChanged) react(processed.toList.reverse) else processed.mkString("").reverse
-      case a :: tail if processed.isEmpty => {
-        processed.push(a)
-        react(tail, processed, isChanged)
-      }
+      case Nil => if(isChanged) react(stack.toList.reverse) else stack.mkString("").reverse
       case a :: tail => {
-        val popped = processed.pop
-        if((popped - a).abs != 32) {
-          processed.push(popped)
-          processed.push(a)
-        }
-        react(tail, processed , isChanged)
+        if(!stack.isEmpty && (stack.head - a).abs == 32) stack.pop()
+        else stack.push(a)
+        react(tail, stack , isChanged)
       }
     }
   }
