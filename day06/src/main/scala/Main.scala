@@ -16,6 +16,12 @@ case class Area(leftTop:Pos, rightBottom:Pos) {
     x <- leftTop.x to rightBottom.x
     y <- leftTop.y to rightBottom.y
   } yield Pos(x, y)
+  def bounds = {
+    (leftTop.y until rightBottom.y).map{y=> Pos(leftTop.x, y)} ++
+    (leftTop.x until rightBottom.x).map{x=> Pos(x, rightBottom.y)} ++
+    (leftTop.y+1 to rightBottom.y).map{y=> Pos(rightBottom.x, y)} ++
+    (leftTop.x+1 to rightBottom.x).map{x=> Pos(x, leftTop.y)}
+  }
   def extend(amount:Int) = Area(leftTop - Pos(amount, amount), rightBottom + Pos(amount, amount))
   def compute(inputPoints:List[Pos]) = {
     points.map{ p => 
@@ -46,13 +52,22 @@ object Main extends Day(6) {
   }
 
   def solve2(input:Input)= {
-    @tailrec
-    def findNotChanged(area:Area, amount:Int = 0, res:Int = 0):Int = {
-      val extendedArea = area.extend(amount)
+
+    def findNotChanged(area:Area):Int = {
+      @tailrec
+      def findNotChangedAcc(amount:Int, res:Int):Int = {
+        require(amount > 0)
+        val extendedArea = area.extend(amount)
+        val bounds = extendedArea.bounds
+        val cal = bounds.count{x=>input.map{_.manhattan(x)}.sum < 10000}
+        if(cal != 0) findNotChangedAcc(amount+1, cal + res)
+        else res
+      }
       val cal = area.points.count{x=>input.map{_.manhattan(x)}.sum < 10000}
-      if(cal != res) findNotChanged(area, amount+1, cal)
-      else cal
+      findNotChangedAcc(1, cal)
     }
-    findNotChanged(Area(Pos(minX, minY), Pos(maxX, maxY)))
+    val mid = (Pos(minX, minY) + Pos(maxX, maxY)) / 2
+    val area = Area(mid, mid+Pos(1,1))
+    findNotChanged(area)
   }
 }
