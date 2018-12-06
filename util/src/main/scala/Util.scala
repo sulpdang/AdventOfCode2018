@@ -70,10 +70,7 @@ abstract class Day(day:Int) extends App {
   def sessionFile:String = "../util/.session"
   val inputFileName = "input.txt"
 
-  def processedInput:Input
-
-  def solve(input:Input):Any
-  def solve2(input:Input):Any
+  def input = readInput.get
 
   def readContent:List[String] = getResource(inputFileName).map(_.split('\n').toList).get
   val readSession = Try(scala.io.Source.fromFile(sessionFile).mkString("").trim)
@@ -113,8 +110,6 @@ abstract class Day(day:Int) extends App {
 
   }
 
-  def input = readInput.get
-
   def printRes {
 
     println(s"--- Day $day ---")
@@ -135,6 +130,11 @@ abstract class Day(day:Int) extends App {
     printSolution(solve2{ processedInput }, "B")
 
   }
+
+  def processedInput:Input
+
+  def solve(input:Input):Any
+  def solve2(input:Input):Any
 
   printRes
 }
