@@ -9,68 +9,59 @@ package solver
 import scala.collection.mutable.Stack
 import myutil._
 
-trait Info
-case object Child extends Info
-case object ChildValue extends Info
-case object Sum extends Info
-case object Meta extends Info
+trait Tree {
+  val meta:List[Int]
+  val sum:Int
+}
+
+trait Node extends Tree {
+  val child:List[Tree]
+}
+
+case class JustSumNode(meta:List[Int], child:List[Tree]) extends Node {
+  val sum:Int = meta.sum + child.map{_.sum}.sum
+}
+case class ChildSumNode(meta:List[Int], child:List[Tree]) extends Node {
+  val sum:Int = {
+    val childValues = child.map{_.sum}
+    meta.map{ m => 
+      if(m <= child.size) Some(childValues(m-1)) else None
+    }.flatten.sum
+  }
+}
+case class Leaf(val meta:List[Int]) extends Tree {
+  val sum:Int = meta.sum
+}
 
 object Main extends Day(8) {
   type Input = List[Int]
   def processedInput = {
     input.head.split(' ').map{_.toInt}.toList
   }
-  def insertInfo(stack:Stack[Info], numChild:Int, numMeta:Int) = {
-    stack.push(Sum)
-    if(numChild > 0) {
-      if(numMeta > 0) (1 to numMeta).foreach{i=>stack.push(ChildValue)}
-      (1 to numChild).foreach{i=>stack.push(Child)}
-    } else {
-      if(numMeta > 0) (1 to numMeta).foreach{i=>stack.push(Meta)}
+  def makingTree(input:List[Int])(makingNode:(List[Int], List[Tree]) => Node):Tree = {
+    def makingTreeAcc(remainInput:List[Int]):(List[Int], Tree) = {
+      remainInput match {
+        case a :: b :: tail if a == 0 => (tail.drop(b), Leaf(tail.take(b)))
+        case a :: b :: tail => 
+          def times(r:Int, rem:List[Int], res:List[Tree]=List()):(List[Int], List[Tree]) = {
+            r match {
+              case 0 => (rem, res)
+              case a => {
+                val (nextRem, tree) = makingTreeAcc(rem)
+                times(a-1, nextRem, res :+ tree)
+              }
+            }
+          }
+          val (nRemain, childs) = times(a, tail)
+          (nRemain.drop(b), makingNode(nRemain.take(b), childs))
+      }
     }
-    stack
+    makingTreeAcc(input)._2
   }
   def solve(input:Input) = {
-    def solveAcc(ints:List[Int], stack:Stack[Info]=Stack(),res:Int = 0,
-      stackChild:Stack[List[Int]]=Stack(), childValues:List[Int]=List()):Int = {
-      ints match {
-        case Nil => res
-        case a::tail if stack.isEmpty =>
-          solveAcc(tail.tail, insertInfo(stack, a, tail.head), res)
-        case a::tail => 
-          stack.pop match {
-            case Child => solveAcc(tail.tail, insertInfo(stack, a, tail.head), res)
-            case Meta | ChildValue => solveAcc(tail, stack, res + a)
-            case Sum => solveAcc(ints, stack, res)
-          }
-      }
-    }
-    solveAcc(input)
+    makingTree(input){case (meta, childs) => JustSumNode(meta,childs) }.sum
   }
   def solve2(input:Input) = {
-    def solve2Acc(ints:List[Int], stack:Stack[Info]=Stack(),res:Int = 0,
-      stackChild:Stack[List[Int]]=Stack(), childValues:List[Int]=List()):Int= {
-      ints match {
-        case Nil => res
-        case a::tail if stack.isEmpty =>
-          solve2Acc(tail.tail, insertInfo(stack, a, tail.head))
-        case a::tail => 
-          stack.pop match {
-            case Child => 
-              stackChild.push(childValues)
-              solve2Acc(tail.tail, insertInfo(stack, a, tail.head), stackChild= stackChild)
-            case Meta => 
-              solve2Acc(tail, stack, res+a, stackChild, childValues)
-            case Sum => 
-              val nextChildValue = stackChild.pop
-              solve2Acc(ints, stack, 0, stackChild, nextChildValue :+ res)
-            case ChildValue if a-1 >= childValues.size => 
-              solve2Acc(tail, stack, res, stackChild, childValues)
-            case ChildValue => 
-              solve2Acc(tail, stack, res + childValues(a-1), stackChild, childValues)
-          }
-      }
-    }
-    solve2Acc(input)
+    makingTree(input){case (meta, childs) => ChildSumNode(meta,childs) }.sum
   }
 }
