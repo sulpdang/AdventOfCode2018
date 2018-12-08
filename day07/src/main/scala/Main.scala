@@ -68,8 +68,7 @@ object Main extends Day(7) {
 
     val (queue, direct, opposite) = input
 
-    def solve2Acc(curTime:Time = 0, working:Schedule, remain:TaskList, 
-      right:MM, opp:MM):Time = {
+    def solve2Acc(curTime:Time = 0, working:Schedule, remain:TaskList, right:MM, opp:MM):Time = {
         def getNextWorker(time:Time, queue:Schedule) =  {
           val (nextTasks, nextRemain) = remain.splitAt(workers - working.size)
           solve2Acc(time, queue ++ nextTasks.map{_.toTimeInfo(time)}, nextRemain, right, opp)

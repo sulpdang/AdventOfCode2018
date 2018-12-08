@@ -4,6 +4,8 @@
 // Copyright (c) 2018 Yohho (sulpdang@gmail.com)
 //
 
+package solver
+
 import scala.collection.mutable._
 import scala.annotation.tailrec
 import myutil._
@@ -20,23 +22,18 @@ object Main extends Day(4) {
 
   def processedInput = {
     @tailrec
-    def travel(input:List[String], minutes:MINUTES = Map(),
+    def travel(input:List[String], minutes:MINUTES = Map().withDefaultValue(List()),
                id:Int= -1, start:Int=0):MINUTES = {
       input match {
         case Nil => minutes
         case a::tail => {
           a(19) match {
-            case 'G' => 
-              val id = a.drop(26).takeWhile(_.isDigit).toInt
-              travel(tail, minutes, id)
-            case 'f' => 
-              require(a.hour == 0, s"Not midnight ${a}")
-              travel(tail, minutes, id, a.minute)
+            case 'G' => travel(tail, minutes, a.drop(26).takeInt)
+            case 'f' => travel(tail, minutes, id, a.minute)
             case 'w' => 
               val end = a.minute
-              if(!minutes.contains(id)) minutes(id)=List()
               minutes(id) ++= (start until end)
-              travel(tail, minutes, id, a.minute)
+              travel(tail, minutes, id, end)
           }
         }
       }

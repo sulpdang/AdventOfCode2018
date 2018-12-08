@@ -16,7 +16,8 @@ object Main extends Day(5) {
   @tailrec
   def react(charList:List[Char], stack:Stack[Char]=Stack(), isChanged:Boolean=false):String = {
     charList match {
-      case Nil => if(isChanged) react(stack.toList.reverse) else stack.mkString("").reverse
+      case Nil if isChanged => react(stack.toList.reverse)
+      case Nil => stack.mkString("").reverse
       case a :: tail => {
         if(!stack.isEmpty && (stack.head - a).abs == 32) stack.pop()
         else stack.push(a)
@@ -26,9 +27,9 @@ object Main extends Day(5) {
   }
   def solve(input:Input) = input.size
   def solve2(input:Input) = {
-    val keys = input.toUpperCase.toSet.toList
+    val keys = input.toUpperCase.toList.distinct
     keys.par.map{ key => 
-      react(input.filterNot{c => c.toUpper == key}.toList)
+      react(input.filterNot{_.toUpper == key}.toList)
     }.toList.map{_.length}.min
   }
 }

@@ -10,19 +10,19 @@ import myutil._
 import scala.collection.mutable._
 import scala.annotation.tailrec
 
-case class Area(leftTop:Pos, rightBottom:Pos) {
-    require(leftTop.x <= rightBottom.x && leftTop.y <= rightBottom.y)
-    def points = for{
-      x <- leftTop.x to rightBottom.x
-      y <- leftTop.y to rightBottom.y
-    } yield Pos(x, y)
+case class Area(lt:Pos, rb:Pos) {
+    require(lt.x <= rb.x && lt.y <= rb.y)
+    def points = (for{
+      x <- lt.x to rb.x
+      y <- lt.y to rb.y
+    } yield Pos(x, y)).toList
     def bounds = {
-      (leftTop.y until rightBottom.y).map{y=> Pos(leftTop.x, y)} ++
-      (leftTop.x until rightBottom.x).map{x=> Pos(x, rightBottom.y)} ++
-      (leftTop.y+1 to rightBottom.y).map{y=> Pos(rightBottom.x, y)} ++
-      (leftTop.x+1 to rightBottom.x).map{x=> Pos(x, leftTop.y)}
-    }
-    def extend(amount:Int) = Area(leftTop - Pos(amount, amount), rightBottom + Pos(amount, amount))
+      (lt.y until rb.y).map{y=> Pos(lt.x, y)} ++
+      (lt.x+1 to rb.x) .map{x=> Pos(x, lt.y)} ++
+      (lt.y+1 to rb.y) .map{y=> Pos(rb.x, y)} ++
+      (lt.x until rb.x).map{x=> Pos(x, rb.y)}
+    }.toList
+    def extend(amount:Int) = Area(lt - Pos(amount, amount), rb + Pos(amount, amount))
     def compute(inputPoints:List[Pos]) = {
       points.map{ p => 
         val minDist = inputPoints.map(p.manhattan).min
@@ -39,32 +39,29 @@ object Main extends Day(6) {
       val res = line.split(",").map{_.trim.takeInt}
       Pos(res(0), res(1))
   }
-  lazy val minX = processedInput.minBy(_.x).x
-  lazy val minY = processedInput.minBy(_.y).y
-  lazy val maxX = processedInput.maxBy(_.x).x
-  lazy val maxY = processedInput.maxBy(_.y).y
+  def getMinMax(func:Pos=>Int) = 
+    (func(processedInput.minBy(func)),func(processedInput.maxBy(func)))
+  lazy val (minX, maxX) = getMinMax(_.x)
+  lazy val (minY, maxY) = getMinMax(_.y)
   lazy val area = Area(Pos(minX, minY), Pos(maxX, maxY))
 
   def solve(input:Input) = {
-    val extendedArea = area.extend(100)
     area.compute(input)
-      .intersect(extendedArea.compute(input)).map(_._2).max
+      .intersect(area.extend(100).compute(input))
+      .map(_._2).max
   }
 
   def solve2(input:Input)= {
-
+    def count(points:List[Pos]) = points.count{x=>input.map{_.manhattan(x)}.sum < 10000}
     def findNotChanged(area:Area):Int = {
         @tailrec
         def findNotChangedAcc(amount:Int, res:Int):Int = {
-          require(amount > 0)
-          val extendedArea = area.extend(amount)
-          val bounds = extendedArea.bounds
-          val cal = bounds.count{x=>input.map{_.manhattan(x)}.sum < 10000}
-          if(cal != 0) findNotChangedAcc(amount+1, cal + res)
-          else res
+          count(area.extend(amount).bounds) match {
+            case 0   => res
+            case cal => findNotChangedAcc(amount+1, cal + res)
+          }
         }
-        val cal = area.points.count{x=>input.map{_.manhattan(x)}.sum < 10000}
-        findNotChangedAcc(1, cal)
+        findNotChangedAcc(1, count(area.points))
     }
     findNotChanged(area)
   }
