@@ -13,77 +13,47 @@ import scala.language.implicitConversions
 
 object Main extends Day(7) {
 
-  type Input = (PriorityQueue[Node], MM, MM)
+  type Edge = (Char, Char)
+  type Input = List[Edge]
 
-  type Node = Char
-  type Edge  = (Node, Node)
-  type MM = mutable.Map[Node, HashSet[Node]]
-  type Time = Int
-  type TimeInfo = (Time, Node)
-  type Schedule = PriorityQueue[TimeInfo]
-  type TaskList = PriorityQueue[Node]
+  def processedInput = input.map{x=>(x(5), x(36))}
 
-  implicit class MapUtil(val map:MM) extends AnyVal {
-    def removeOppMapAndGetNextTasks(opp:MM, n:Node) =
-      map(n).filter{ p => opp(p) -= n; opp(p).size == 0 }
-  }
-
-  implicit class NodeUtil(val node:Node) extends AnyVal {
-    def toTimeInfo(curTime:Time)(implicit timeInfo:Time) = 
-      (curTime + (node - 'A')+timeInfo + 1, node)
-  }
-
+  type MM[A, B] = mutable.Map[A, B]
   implicit def immuMapToMu[A, B](map:immutable.Map[A, B]) = mutable.Map[A, B](map.toSeq: _*)
 
-  def processedInput = {
-    val newInput = input.map{ x => (x(5), x(36)) }
-    def toDistinct(func:Edge=>Node) = newInput.map(func).distinct
-    val parents   = toDistinct(_._1)
-    val children  = toDistinct(_._2)
-    val start     = PriorityQueue(parents.diff(children):_*).reverse
-    val direct    = newInput.groupBy{_._1}.mapValues(x=> HashSet(x.map(_._2):_*))
-    val opposite  = newInput.groupBy{_._2}.mapValues(x=> HashSet(x.map(_._1):_*))
-    (start, direct, opposite)
-  }
+  def solvePart(input:Input, workers:Int)(timeFunc:Char => Int) = {
+    import math._
+    implicit val ordering:Ordering[(Int, Char)] = Ordering.by{case (t, c) => (-t, -c)}
+    val queue = PriorityQueue[(Int, Char)]()
+    val waiting = PriorityQueue[Char]().reverse
+    val degrees = input.groupBy(_._2).mapValues(_.size)
+    val connected = input.groupBy(_._1).mapValues(_.map(_._2))
 
-  def solve(input:Input) = {
-    val (queue, direct, opposite) = input
-    def solveAcc(current:PriorityQueue[Node], right:MM, opp:MM, res:List[Node]=List()):String = {
-      if(current.isEmpty) res.mkString("")
+    def solveAcc(degrees:MM[Char, Int], connected:Map[Char, List[Char]], res:List[(Int, Char)]=List()):List[(Int,Char)]= {
+      if(queue.isEmpty) res
       else {
-          val h = current.dequeue()
-          val nextVisit = 
-            if(right.contains(h)) right.removeOppMapAndGetNextTasks(opp, h) 
-            else HashSet()
-          solveAcc((current ++ nextVisit), right, opp, res :+ h)
-      }
-    }
-    solveAcc(queue, direct, opposite)
-  }
-
-  def solve2(input:Input) = {
-    val workers = 5
-    implicit val addTime:Time = 60
-    implicit val ordering:Ordering[TimeInfo] = Ordering.by{case (t, _) => -t}
-
-    val (queue, direct, opposite) = input
-
-    def solve2Acc(curTime:Time = 0, working:Schedule, remain:TaskList, right:MM, opp:MM):Time = {
-        def getNextWorker(time:Time, queue:Schedule) =  {
-          val (nextTasks, nextRemain) = remain.splitAt(workers - working.size)
-          solve2Acc(time, queue ++ nextTasks.map{_.toTimeInfo(time)}, nextRemain, right, opp)
-        }
-        working match {
-          case queue if queue.isEmpty && remain.isEmpty => curTime
-          case queue if queue.isEmpty => getNextWorker(curTime, queue)
-          case queue => {
-            val (t, n) = queue.dequeue()
-            if(right.contains(n)) 
-              remain ++= right.removeOppMapAndGetNextTasks(opp, n)
-            getNextWorker(t, queue)
+        val (time, first) = queue.dequeue
+        if(connected contains first) {
+          connected(first).foreach{ t => 
+            degrees(t) -= 1
+            if(degrees(t) == 0) waiting.enqueue(t)
           }
         }
+        degrees -= first
+        moveToQueue(workers - queue.size, time)
+        solveAcc(degrees, connected, res :+ (time, first) )
+      }
     }
-    solve2Acc(0, PriorityQueue(), queue, direct, opposite)
+
+    def moveToQueue(num:Int, baseTime:Int) = 
+      (0 until min(num, waiting.size)).map{x=>waiting.dequeue}
+        .foreach{c=>queue.enqueue((baseTime + timeFunc(c), c))}
+
+    waiting ++= connected.keySet.diff(degrees.keySet)
+    moveToQueue(workers, 0)
+    solveAcc(degrees, connected)
   }
+
+  def solve(input:Input) = solvePart(input, 5)(c=> 0).map(_._2).mkString("")
+  def solve2(input:Input) = solvePart(input, 5)(c=> c-'A' + 61).last._1
 }

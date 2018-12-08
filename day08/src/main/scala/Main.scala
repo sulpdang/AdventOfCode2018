@@ -32,17 +32,11 @@ object Main extends Day(8) {
       remainInput match {
         case a :: b :: tail if a == 0 => (tail.drop(b), Leaf(tail.take(b)))
         case a :: b :: tail => 
-          def times(r:Int, rem:List[Int], res:List[Tree]=List()):(List[Int], List[Tree]) = {
-            r match {
-              case 0 => (rem, res)
-              case a => {
-                val (nextRem, tree) = makingTreeAcc(rem)
-                times(a-1, nextRem, res :+ tree)
-              }
-            }
-          }
-          val (nRemain, childs) = times(a, tail)
-          (nRemain.drop(b), Node(nRemain.take(b), childs, sumNode))
+          val (nRemain, children) = (1 to a).foldLeft((tail, List[Tree]())){
+            case ((rem, res), _) => 
+              val (nextRem, tree) = makingTreeAcc(rem)
+              (nextRem, res :+ tree) }
+          (nRemain.drop(b), Node(nRemain.take(b), children, sumNode))
       }
     }
     makingTreeAcc(input)._2
