@@ -54,6 +54,6 @@ object Main extends Day(7) {
     solveAcc(degrees, connected)
   }
 
-  def solve(input:Input) = solvePart(input, 5)(c=> 0).map(_._2).mkString("")
+  def solve(input:Input) = solvePart(input, input.size)(c=> 0).map(_._2).mkString("")
   def solve2(input:Input) = solvePart(input, 5)(c=> c-'A' + 61).last._1
 }

@@ -17,5 +17,13 @@ package object solver {
       y <- (lt.y to rb.y)
     } yield Pos(x, y)
   }
+  implicit class IntUtil(val i:Int) extends AnyVal {
+    def times(t: => Unit) {
+      (1 to i).foreach{i=>t}
+    }
+    def times[T](first:T)(t: (T,Int) => T):T = {
+      (1 to i).foldLeft(first){t}
+    }
+  }
 }
 
