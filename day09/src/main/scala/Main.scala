@@ -23,8 +23,8 @@ object Main extends Day(9) {
     val Array(player, worth) = input.head.split(';')
     (player.takeInt,worth.drop(22).takeInt)
   }
-  def solvePart(numOfPlayer:Int, worth:Int):BigInt = {
-    val playerScores = Map[Int, BigInt]().withDefaultValue(0)
+  def solvePart(numOfPlayer:Int, worth:Int):Long = {
+    val playerScores = Map[Int, Long]().withDefaultValue(0)
     val startNode = Node(0)
 
     def solveAcc(node:Node, player:Int, num:Int):Node = {
