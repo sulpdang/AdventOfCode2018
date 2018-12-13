@@ -32,7 +32,7 @@ object Main extends Day(9) {
         case (_, n) if n == worth => node
         case (p, n) if p > numOfPlayer => solveAcc(node, 1, n)
         case (p, n) if n%23 == 0 => {
-          val prev7Node = 7.times(node){case (acc, _)=>acc.prev}
+          val prev7Node = 7.foldLeft(node){case (acc, _)=>acc.prev}
           val prevPrev7Node = prev7Node.prev
           val prevNext7Node = prev7Node.next
           prevPrev7Node -- prevNext7Node

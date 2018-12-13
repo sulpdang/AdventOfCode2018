@@ -13,7 +13,7 @@ package object solver {
 
   case class Area(val lt:Pos, val rb:Pos) {
     def points = for{
-      x <- (lt.x to rb.x)
+      x <- (lt.x to rb.x).toIterator
       y <- (lt.y to rb.y)
     } yield Pos(x, y)
 
@@ -32,7 +32,7 @@ package object solver {
     def times(t: => Unit) {
       (1 to i).foreach{i=>t}
     }
-    def times[T](first:T)(t: (T,Int) => T):T = {
+    def foldLeft[T](first:T)(t: (T,Int) => T):T = {
       (1 to i).foldLeft(first){t}
     }
   }
