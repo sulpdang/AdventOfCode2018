@@ -6,25 +6,6 @@
 //
 
 package object myutil {
-  import math._
-  case class Pos(val x:Int, val y:Int) extends Ordered[Pos] {
-    def this(arr:Array[String]) = this(arr(0).toInt, arr(1).toInt)
-    def +(other:Pos) = Pos(x + other.x, y + other.y)
-    def -(other:Pos) = Pos(x - other.x, y - other.y)
-    def *(value:Int) = Pos(x * value, y * value)
-    def /(value:Int) = Pos(x / value, y / value)
-    def manhattan(that:Pos) = (this.x - that.x).abs + (this.y - that.y).abs
-    def dist(that:Pos) = {
-      val distX = this.x - that.x
-      val distY = this.y - that.y
-      sqrt(distX*distX + distY*distY)
-    }
-    def compare(that:Pos) = {
-      if(this.x == that.y) this.y - that.y
-      else this.x - that.y
-    }
-  }
-
 
   object Util {
 
