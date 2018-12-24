@@ -50,8 +50,8 @@ package object solver {
       sqrt(distX*distX + distY*distY)
     }
     def compare(that:Pos) = {
-      if(this.x == that.y) this.y - that.y
-      else this.x - that.y
+      if(this.y != that.y) this.y - that.y
+      else this.x - that.x
     }
   }
 
