@@ -50,7 +50,8 @@ package object myutil {
     def sessionFile:String = "../util/.session"
     val inputFileName = "input.txt"
 
-    def input = readInput.get
+    def input = testInput.getOrElse(readInput.get)
+    def testInput:Option[List[String]] = None
 
     def readContent:List[String] = getResource(inputFileName).map(_.split('\n').toList).get
     val readSession = Try(scala.io.Source.fromFile(sessionFile).mkString("").trim)
@@ -92,7 +93,9 @@ package object myutil {
 
     def printRes {
 
-      println(s"--- Day $day ---")
+      println(testInput.map{x=>s"--- Test:Day ${day} ---"}.getOrElse{
+        s"--- Day $day ---"
+      })
 
       def num(e:Throwable) = {
         e.getStackTrace().toArray
@@ -110,6 +113,7 @@ package object myutil {
       printSolution(solve2{ processedInput }, "B")
 
     }
+
 
     def processedInput:Input
 

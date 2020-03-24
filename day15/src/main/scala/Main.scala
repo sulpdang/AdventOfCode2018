@@ -31,15 +31,8 @@ object Main extends Day(15) {
     def print = arr.map{_.mkString("")}.mkString("\n")
   }
 
-  implicit class PosUtil(val pos:Pos) extends AnyVal {
-    def nears(dungeon:Dungeon):List[Pos] = List(Pos(0, -1), Pos(-1, 0), Pos(1, 0), Pos(0, 1))
-      .map{ pos + _ }.filter{dungeon.in(_)}
-  }
   case class Path(pos:Pos, prev:Option[Path] = None) {
-    def root:Path = prev match {
-      case Some(parent) => parent.root
-      case None => this
-    }
+    def root:Path = prev.map{_.root}.getOrElse{this}
   }
 
   case class Monster(var pos:Pos, val isGoblin:Boolean, val attackPower:Int, var hp:Int=200) extends Ordered[Monster] {
@@ -48,9 +41,9 @@ object Main extends Day(15) {
     def isDead  = hp <= 0
     def isAlive = !isDead
     def nextWalk(dungeon:Dungeon):List[Pos] =
-      pos.nears(dungeon).filter{dungeon.canWalk(_)}
+      pos.nears.filter{pos => dungeon.in(pos) && dungeon.canWalk(pos)}
     def nearEnemy(dungeon:Dungeon, posInfo:MonsterPos) = {
-      pos.nears(dungeon).collect {
+      pos.nears.filter{dungeon.in}.collect {
         case pos if isGoblin && dungeon.isElf(pos) => (posInfo(pos), pos)
         case pos if !isGoblin && dungeon.isGoblin(pos) => (posInfo(pos), pos)
       }.sorted.map{_._1}.headOption
@@ -76,8 +69,7 @@ object Main extends Day(15) {
           case Seq(head, tail @ _*) if head.isDead => roundAcc(tail, goblins, elves, dungeon, posInfo)
           case Seq(head, tail @ _*) => {
             require(head.isAlive)
-            head.nearEnemy(dungeon, posInfo) match {
-              case None => {
+            head.nearEnemy(dungeon, posInfo).orElse {
                 val enemies = if(head.isGoblin) elves else goblins
                 enemies.flatMap{_.nextWalk(dungeon)} match {
                   case Nil =>
@@ -98,10 +90,8 @@ object Main extends Day(15) {
                       posInfo(head.pos) = head
                     }
                 }
-              }
-              case _ =>
-            }
-            head.nearEnemy(dungeon, posInfo) match {
+                head.nearEnemy(dungeon, posInfo)
+            } match {
               case Some(nearEnemy) =>
                 nearEnemy.damaged
                 if(nearEnemy.isDead) {
@@ -111,9 +101,7 @@ object Main extends Day(15) {
                     roundAcc(tail, goblins.filterNot{_ == nearEnemy}, elves, dungeon, posInfo - deadPos)
                   else
                     roundAcc(tail, goblins, elves.filterNot{_ == nearEnemy}, dungeon, posInfo - deadPos)
-
                 } else roundAcc(tail, goblins, elves, dungeon, posInfo)
-
               case None => roundAcc(tail, goblins, elves, dungeon, posInfo)
             }
           }
@@ -128,7 +116,7 @@ object Main extends Day(15) {
     Iterator.iterate((nexts.map{Path(_)}, nexts.toSet)) {
       case (pathes, totVisit) =>
         pathes.foldLeft((List[Path](), totVisit)){ case ((res, visited), path) =>
-          val nextPoses = path.pos.nears(dungeon)
+          val nextPoses = path.pos.nears.filter{dungeon.in}
                 .filter{pos => dungeon.canWalk(pos) && !visited.contains(pos)}
           (res ++ nextPoses.map{pos=>Path(pos, Some(path))}, visited ++ nextPoses)
         }

@@ -8,7 +8,7 @@ package solver
 
 import myutil._
 import scala.collection._
-import scala.collection.mutable.{HashSet, PriorityQueue}
+import scala.collection.mutable.{HashSet, PriorityQueue=>PQ, Map=>MM}
 import scala.language.implicitConversions
 
 object Main extends Day(7) {
@@ -18,15 +18,13 @@ object Main extends Day(7) {
 
   def processedInput = input.map{x=>(x(5), x(36))}
 
-  type MM[A, B] = mutable.Map[A, B]
-  implicit def immuMapToMu[A, B](map:immutable.Map[A, B]) = mutable.Map[A, B](map.toSeq: _*)
+  implicit def immuMapToMu[A, B](map:immutable.Map[A, B]) = MM[A, B](map.toSeq: _*)
 
   def solvePart(input:Input, workers:Int)(timeFunc:Char => Int) = {
     import math._
-    implicit val ordering:Ordering[(Int, Char)] = Ordering.by{case (t, c) => (-t, -c)}
-    val queue = PriorityQueue[(Int, Char)]()
-    val waiting = PriorityQueue[Char]().reverse
-    val degrees = input.groupBy(_._2).mapValues(_.size)
+    val queue:PQ[(Int, Char)]  = PQ.empty(Ordering.by{case (t, c) => (-t, -c)})
+    val waiting   = PQ[Char]().reverse
+    val degrees   = input.groupBy(_._2).mapValues(_.size)
     val connected = input.groupBy(_._1).mapValues(_.map(_._2))
 
     def solveAcc(degrees:MM[Char, Int], connected:Map[Char, List[Char]], res:List[(Int, Char)]=List()):List[(Int,Char)]= {
